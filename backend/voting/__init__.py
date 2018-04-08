@@ -15,6 +15,23 @@ mqttc.connect("127.0.0.1")
 mqttc.loop_start()
 
 
+def put_to_MQTT():
+    val = r.get('counter')
+    max_votes = r.get('max_votes')
+
+    if val is None:
+        val = '0'
+
+    if max_votes is None:
+        max_votes = '1'
+
+    val = float(val)
+    max_votes = float(max_votes)
+    res = int(val/max_votes*10000)
+    res = max(0, min(res,10000))
+    mqttc.publish("hs/voting/count", str(val))
+
+
 @app.route('/img/<path:path>')
 def send_js(path):
     return send_from_directory('img', path)
@@ -22,6 +39,8 @@ def send_js(path):
 @app.route('/')
 def home():
     val = r.get('counter')
+    if val is None:
+        val = b'0'
     return render_template('home.html', val=val.decode('utf-8'))
 
 @app.route('/status')
@@ -39,7 +58,7 @@ def vote_post():
             r.decr('counter', amount=1)
 
         val = r.get('counter')
-        mqttc.publish("hs/voting/count",val)
+        put_to_MQTT()
 
         # return "Hello World!" + val.decode('utf-8')
         return render_template('vote_done.html', count=val)
@@ -55,10 +74,10 @@ def admin_post():
         amount = request.form['max_votes']
 
         if password == "go":
-
             r.set('counter', 0)
             r.set('max_votes', amount)
             val = r.get('counter')
+            put_to_MQTT()
             return render_template('admin_done.html', count = val)
         else:
             return 'Пароль то не тот!'

@@ -67,9 +67,11 @@ Vagrant.configure("2") do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
         apt-get update
+        sudo apt-get install -y  git
         sudo apt-get install -y  python-virtualenv
-        sudo apt-get install python3.5-dev
-        sudo apt-get install python3-pip
+        sudo apt-get install -y python3.5-dev
+        sudo apt-get install -y python3-pip
+        sudo pip3 install --upgrade pip
         sudo pip3 install uwsgi
 
         wget http://download.redis.io/redis-stable.tar.gz
