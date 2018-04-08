@@ -2,17 +2,26 @@ from flask import request
 from flask import Flask
 from flask import render_template, send_from_directory
 import paho.mqtt.client as mqtt
-
+from paho.mqtt.publish import single
+# from flask_mqtt import Mqtt
 
 app = Flask(__name__,  static_url_path='')
 
+# mqttc = mqtt.Client()
+
+# app.config['MQTT_BROKER_URL'] = '127.0.0.1'
+# app.config['MQTT_BROKER_PORT'] = 1883
+# app.config['MQTT_USERNAME'] = ''
+# app.config['MQTT_PASSWORD'] = ''
+# app.config['MQTT_REFRESH_TIME'] = 1.0  # refresh time in seconds
+# mqttc = Mqtt(app)
+
+# @mqttc.on_publish()
+# def handle_publish(client, userdata, mid):
+    # print('Published message with mid {}.' .format(mid))
 
 import redis
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
-
-mqttc = mqtt.Client()
-mqttc.connect("127.0.0.1")
-mqttc.loop_start()
 
 
 def put_to_MQTT():
@@ -29,7 +38,9 @@ def put_to_MQTT():
     max_votes = float(max_votes)
     res = int(val/max_votes*10000)
     res = max(0, min(res,10000))
-    mqttc.publish("voting/pos", str(res))
+    single("voting/pos", payload=res, qos=0, retain=True)
+    # pr = mqttc.publish("voting/pos", payload=res, retain=True)
+    # print(pr)
 
 
 @app.route('/img/<path:path>')

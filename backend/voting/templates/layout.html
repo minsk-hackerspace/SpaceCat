@@ -10,10 +10,14 @@
         .form-btn{
             width:100%;
         }
+        .page-content{
+            min-height:700px;
+        }
     </style>
   </head>
 
 <body>
+    <div class="page-content" >
         <div class="mui-appbar">
                 <div class="mui-container-fluid">
                     <div class="mui-row">
@@ -47,4 +51,5 @@
         {% endfor %}
         {% block body %}{% endblock %}
         </div>
+    </div>
 </body>
