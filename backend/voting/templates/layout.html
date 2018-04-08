@@ -1,0 +1,50 @@
+<!doctype html>
+<title>Space voter</title>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="//cdn.muicss.com/mui-0.9.39-rc1/css/mui.min.css" rel="stylesheet" type="text/css" />
+    <script src="//cdn.muicss.com/mui-0.9.39-rc1/js/mui.min.js"></script>
+    <style>
+        .form-btn{
+            width:100%;
+        }
+    </style>
+  </head>
+
+<body>
+        <div class="mui-appbar">
+                <div class="mui-container-fluid">
+                    <div class="mui-row">
+                        <div class="mui-col-md-2 mui-col-xs-12">
+                            <a href="/">
+                                <img src="/img/space-logo-2x.png" height="50px" />
+                            </a>
+                        </div>
+                        <div class="mui-col-md-2 mui-col-xs-12">
+                            <button class="form-btn mui-btn mui-btn--raised">
+                            <a href="/vote" class="mui--text-dark">Голосовать</a>
+                            </button>
+                        </div>
+                        <div class="mui-col-md-2 mui-col-xs-12">
+                            <button class="form-btn mui-btn mui-btn--raised">
+                            <a href="/admin" class="mui--text-dark">Управлять</a>
+                            </button>
+                        </div>
+                        <div class="mui-col-md-6 mui-col-xs-12" align="right">
+                            <a href="https://hackerspace.by" class="mui--text-right" target="_blank">
+                                <img src="/img/black.png" height="50px" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+        <div class="mui-container-fluid">
+        {% for message in get_flashed_messages() %}
+            <div class=flash>{{ message }}</div>
+        {% endfor %}
+        {% block body %}{% endblock %}
+        </div>
+</body>

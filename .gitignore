@@ -1,0 +1,6 @@
+backend/venv
+.DS_Store
+.vagrant
+.vagrant
+*.log
+*.pyc
