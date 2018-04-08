@@ -33,9 +33,10 @@ pip install -r requirements.txt
 
 ### run redis
 
-- systemctl enable redis
-- systemctl start redis
-
+```
+systemctl enable redis
+systemctl start redis
+```
 
 ## Setup uwsgi
 
@@ -46,8 +47,16 @@ cp backend/voting.ini /etc/uwsgi/
 
 ```
 
-### start emperror at boot (rc.local)
-- uwsgi --master --die-on-term --emperor /etc/uwsgi
+### start emperror at boot as service
+
+- Get file contents from ./config
+- /etc/systemd/system/redis.service
+
+```
+systemctl enable uwsgi
+systemctl start uwsgi
+```
+
 
 ### App config
 - copy app config /etc/uwsgi
