@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %}
+
+    <form  class="mui-form" action="/admin" method="POST">
+        <legend>Управление голосованием
+            <br/>
+            <br/>
+            <br/>
+        </legend>
+
+
+            <div class="mui-textfield mui-textfield--float-label">
+                <input name="max_votes" type="text" value="200">
+                <label>Максимальное число голосов</label>
+            </div>
+            <div class="mui-textfield mui-textfield--float-label">
+            <input name="password" type="password" value="">
+            <label>Пароль администратора</label>
+            </div>
+        <button name="vote" value="reset" type="submit" class="mui-btn mui-btn--raised mui-btn--danger">Сбросить голосование</button>
+    </form>
+{% endblock %}

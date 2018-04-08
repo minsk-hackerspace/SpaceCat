@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="mui-container-fluid">
+<form class="mui-form" action="/vote" method="POST">
+    <div class="mui-row">
+        <div class="mui-col-md-12 mui-col-xs-12">
+    <legend>Проголосовать </legend>
+        </div></div>
+
+    <div class="mui-row">
+        <div class="mui-col-md-6 mui-col-xs-12">
+            <button name="vote" value="yes" type="submit" class="form-btn mui-btn mui-btn--large mui-btn--raised mui-btn--primary">Я голосую ЗА</button>
+        </div>
+        <div class="mui-col-md-6 mui-col-xs-12">
+            <button name="vote" value="no" type="submit" class="form-btn mui-btn mui-btn--large mui-btn--raised mui-btn--accent">Я голосую Против</button>
+        </div>
+</form>
+{% endblock %}
