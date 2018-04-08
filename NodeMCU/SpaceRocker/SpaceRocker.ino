@@ -19,29 +19,105 @@
 
 long maxPos = 1;
 long minPos = 0;
-
+long revSteps = 400;
+long targetPos = 0;
 
 AccelStepper stepper(AccelStepper::DRIVER, STEPPER_STEP_PIN, STEPPER_DIR_PIN);
 
-void calibrateStepper() {
+//pos 0..10000
+long moveRockerToTargetPos(long pos) {
+    targetPos = pos;
 
-  stepper.moveTo(LONG_MAX);
+    if (targetPos < 0) {
+      targetPos = 0;
+    }
+    
+    if (targetPos > 10000) {
+      targetPos = 10000;
+    }
+    
+    Serial.println("-");
+    Serial.print("Moving Rocket to Rpos: ");
+    Serial.print(targetPos);
+
+    long tpos = map(pos, 0, 10000, (minPos+revSteps), (maxPos-revSteps));
+    
+    stepper.moveTo(tpos);
+
+    Serial.print(" Spos: ");
+    Serial.println(stepper.targetPosition());
+
+    Serial.println("-");
+
+    return stepper.targetPosition();
+}
+
+void calibrateStepper() {
+  
+  Serial.println("Release ends...");
+
+  //release high end
+  stepper.setCurrentPosition(LONG_MAX);
+  stepper.moveTo(0);
   while(digitalRead(STEPPER_MAX_END_PIN) == LOW) {
-     stepper.run();
      yield();
+     stepper.run();
+  }
+  
+  //release low end
+  stepper.setCurrentPosition(1-LONG_MAX);
+  stepper.moveTo(0);
+  while(digitalRead(STEPPER_MIN_END_PIN) == LOW) {
+     yield();
+     stepper.run();
+  }
+
+  Serial.println("Calibrating...");
+  stepper.setCurrentPosition(0);
+  
+  stepper.moveTo(LONG_MAX);
+  Serial.print("goto ");
+  Serial.println(stepper.targetPosition());
+  while(digitalRead(STEPPER_MAX_END_PIN) == HIGH) {
+     yield();
+     stepper.run();
   }
   maxPos = stepper.currentPosition();
-  stepper.moveTo(-LONG_MAX);
-  while(digitalRead(STEPPER_MIN_END_PIN) == LOW) {
-     stepper.run();
+  
+  stepper.moveTo(0);
+  Serial.print("goto ");
+  Serial.println(stepper.targetPosition());
+  while(digitalRead(STEPPER_MIN_END_PIN) == HIGH && stepper.distanceToGo()) {
      yield();
+     stepper.run();
   }
+  
+  stepper.moveTo(1-LONG_MAX);
+  Serial.print("goto ");
+  Serial.println(stepper.targetPosition());
+  while(digitalRead(STEPPER_MIN_END_PIN) == HIGH) {
+     yield();
+     stepper.run();
+  }
+  
   minPos = stepper.currentPosition();
+  Serial.println(" ... ");
+  Serial.print("Calibration done: max ");
+  Serial.print(maxPos);     
+  Serial.print(" min ");
+  Serial.println(minPos);     
+  Serial.println(" ... ");
+
+  delay(200);
+  moveRockerToTargetPos(0);
+  delay(200);
+  Serial.println(" ... ");
 }
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   Serial.begin(115200);
+  Serial.println("RockerLaucher");
   pinMode(STEPPER_STEP_PIN, OUTPUT);
   pinMode(STEPPER_DIR_PIN, OUTPUT);  
   pinMode(STEPPER_MIN_END_PIN, INPUT_PULLUP);
@@ -51,7 +127,30 @@ void setup() {
   calibrateStepper();
 }
 
-//int pos = 0;
+
+void setup_wifi() {
+
+  delay(10);
+  // We start by connecting to a WiFi network
+  Serial.println();
+  Serial.print("Connecting to ");
+  //Serial.println(ssid);
+
+  //WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  randomSeed(micros());
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+}
+
 
 // the loop function runs over and over again forever
 void loop() {
@@ -59,11 +158,16 @@ void loop() {
   while (Serial.available() > 0) {
     int pos = Serial.parseInt();
     if (Serial.read() == '\n') {
-      Serial.print(pos);
-      stepper.moveTo(pos);    
+      moveRockerToTargetPos(pos);
     }
   }
 
   stepper.run();
-  yield();
+  
+  if (digitalRead(STEPPER_MIN_END_PIN) == LOW || digitalRead(STEPPER_MAX_END_PIN) == LOW ) {
+    delay(100);
+    Serial.println("Calibrate again ! ");
+    delay(100);
+    calibrateStepper();
+  }
 }
