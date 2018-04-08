@@ -16,6 +16,9 @@
 #define STEPPER_MIN_END_PIN D3
 #define STEPPER_MAX_END_PIN D4
 
+#define min(a,b) (a<b ? a : b)
+
+#define LED_PIN D7
 
 long maxPos = 1;
 long minPos = 0;
@@ -118,9 +121,14 @@ void calibrateStepper() {
   Serial.println(minPos);     
   Serial.println(" ... ");
 
-  delay(200);
   moveRockerToTargetPos(0);
-  delay(200);
+  
+  while(stepper.distanceToGo()) {
+     yield();
+     stepper.run();
+  }
+  
+  delay(100);
   Serial.println(" ... ");
 }
 
@@ -164,9 +172,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 
   Serial.println();
+  char buf[200];
+  memset(buf,0,200);
+  memcpy(buf, payload, min(198,length));
   
   char *ptr;
-  long pos = strtol((const char*)payload, &ptr, 10); 
+  long pos = strtol(buf, &ptr, 10); 
   
   Serial.println(pos);
   moveRockerToTargetPos(pos);
@@ -208,10 +219,12 @@ void setup() {
   pinMode(STEPPER_DIR_PIN, OUTPUT);  
   pinMode(STEPPER_MIN_END_PIN, INPUT_PULLUP);
   pinMode(STEPPER_MAX_END_PIN, INPUT_PULLUP);
-  stepper.setMaxSpeed(800.0);
-  stepper.setAcceleration(8000.0);  
-  calibrateStepper();
 
+  stepper.setMinPulseWidth(100);
+  stepper.setMaxSpeed(800.0);
+  stepper.setAcceleration(3200.0);  
+  calibrateStepper();
+  delay(500);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
