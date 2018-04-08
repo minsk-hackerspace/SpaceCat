@@ -22,7 +22,9 @@
 
 long maxPos = 1;
 long minPos = 0;
-long revSteps = 400;
+long revSteps = 200;
+long calibrationSpeed = 50;
+long moveSpeed = 200;
 long targetPos = 0;
 
 const char* ssid = "hackerspace";
@@ -68,6 +70,7 @@ long moveRockerToTargetPos(long pos) {
 void calibrateStepper() {
   
   Serial.println("Release ends...");
+  stepper.setMaxSpeed(calibrationSpeed);
 
   //release high end
   stepper.setCurrentPosition(LONG_MAX);
@@ -127,6 +130,8 @@ void calibrateStepper() {
      yield();
      stepper.run();
   }
+  
+  stepper.setMaxSpeed(moveSpeed);
   
   delay(100);
   Serial.println(" ... ");
@@ -221,7 +226,7 @@ void setup() {
   pinMode(STEPPER_MAX_END_PIN, INPUT_PULLUP);
 
   stepper.setMinPulseWidth(100);
-  stepper.setMaxSpeed(800.0);
+  stepper.setMaxSpeed(moveSpeed);
   stepper.setAcceleration(3200.0);  
   calibrateStepper();
   delay(500);
