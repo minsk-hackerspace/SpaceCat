@@ -29,7 +29,7 @@ def put_to_MQTT():
     max_votes = float(max_votes)
     res = int(val/max_votes*10000)
     res = max(0, min(res,10000))
-    mqttc.publish("hs/voting/count", str(val))
+    mqttc.publish("voting/pos", str(val))
 
 
 @app.route('/img/<path:path>')
