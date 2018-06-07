@@ -8,17 +8,26 @@
 #include <AccelStepper.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-
+#include <NeoPixelBus.h>
 
 #define STEPPER_STEP_PIN D1
 #define STEPPER_DIR_PIN D2
 
-#define STEPPER_MIN_END_PIN D3
-#define STEPPER_MAX_END_PIN D4
+#define LED_PIN D4
+
+#define STEPPER_MIN_END_PIN D5
+#define STEPPER_MAX_END_PIN D6
+
+
+#define MIN_END_ON (digitalRead(STEPPER_MIN_END_PIN)==LOW)
+#define MAX_END_ON (digitalRead(STEPPER_MAX_END_PIN)==LOW)
+
+#define MIN_END_OFF (digitalRead(STEPPER_MIN_END_PIN)==HIGH)
+#define MAX_END_OFF (digitalRead(STEPPER_MAX_END_PIN)==HIGH)
 
 #define min(a,b) (a<b ? a : b)
 
-#define LED_PIN D7
+
 
 long maxPos = 1;
 long minPos = 0;
@@ -31,6 +40,8 @@ const char* ssid = "hackerspace";
 const char* password = "hs_pass_0";
 const char* mqtt_server = "178.172.172.103";
 
+
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 long lastMsg = 0;
@@ -38,6 +49,29 @@ char msg[50];
 int value = 0;
 
 AccelStepper stepper(AccelStepper::DRIVER, STEPPER_STEP_PIN, STEPPER_DIR_PIN);
+
+//led
+NeoPixelBus<NeoGrbFeature, NeoEsp8266Uart800KbpsMethod> led(1, LED_PIN);
+#define colorSaturation 128
+//define some colors
+RgbColor red(colorSaturation, 0, 0);
+RgbColor green(0, colorSaturation, 0);
+RgbColor blue(0, 0, colorSaturation);
+RgbColor white(colorSaturation);
+RgbColor violet(colorSaturation, 0, colorSaturation);
+RgbColor black(0);
+
+HslColor hslRed(red);
+HslColor hslGreen(green);
+HslColor hslBlue(blue);
+HslColor hslWhite(white);
+HslColor hslBlack(black);
+
+template<typename T_COLOR_FEATURE> void ledShow(typename T_COLOR_FEATURE::ColorObject color) {
+  led.SetPixelColor(0, color);
+  led.Show();
+}
+
 
 //pos 0..10000
 long moveRockerToTargetPos(long pos) {
@@ -137,6 +171,16 @@ void calibrateStepper() {
   Serial.println(" ... ");
 }
 
+void doConfiguration() {
+  Serial.print("Configuration.");
+  while (true) {
+    ledShow<NeoGrbFeature>(violet);
+    delay(200);
+    ledShow<NeoGrbFeature>(black);    
+    delay(200);    
+    Serial.print("*");
+  }
+}
 
 void setup_wifi() {
 
@@ -213,7 +257,12 @@ void reconnect() {
   }
 }
 
-// setup
+
+
+//
+//  MAIN SETUP FUCTION
+//
+
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   Serial.begin(115200);
@@ -221,24 +270,45 @@ void setup() {
   Serial.println("RockerLaucher");
   
   pinMode(STEPPER_STEP_PIN, OUTPUT);
-  pinMode(STEPPER_DIR_PIN, OUTPUT);  
+  pinMode(STEPPER_DIR_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);  
   pinMode(STEPPER_MIN_END_PIN, INPUT_PULLUP);
   pinMode(STEPPER_MAX_END_PIN, INPUT_PULLUP);
 
+  led.Begin();
+  ledShow<NeoGrbFeature>(red);
+  delay(100);
+  ledShow<NeoGrbFeature>(blue);
+  delay(100);
+  ledShow<NeoGrbFeature>(red);
+  delay(100);
+  ledShow<NeoGrbFeature>(blue);
+  delay(100);
+  ledShow<NeoGrbFeature>(black);
+  
+  if (MIN_END_ON && MIN_END_ON ) {
+    delay(100);
+    doConfiguration();
+  }
+  
   stepper.setMinPulseWidth(100);
   stepper.setMaxSpeed(moveSpeed);
   stepper.setAcceleration(3200.0);  
+
   calibrateStepper();
-  delay(500);
+
+  ledShow<NeoGrbFeature>(white);
+  delay(100);
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
-    
+  ledShow<NeoGrbFeature>(black);  
+  
 }
 
 // the loop function runs over and over again forever
 void loop() {
-
+  
   while (Serial.available() > 0) {
     int pos = Serial.parseInt();
     if (Serial.read() == '\n') {
@@ -247,11 +317,22 @@ void loop() {
   }
 
   stepper.run();
-  
-  if (digitalRead(STEPPER_MIN_END_PIN) == LOW || digitalRead(STEPPER_MAX_END_PIN) == LOW ) {
+
+  long d = stepper.distanceToGo();
+  if (d > 0) {
+    ledShow<NeoGrbFeature>(blue);
+  } else if ( d < 0) {
+    ledShow<NeoGrbFeature>(red);
+  } else {
+    ledShow<NeoGrbFeature>(black);
+  }
+
+  if (MIN_END_ON && MIN_END_ON ) {
+    delay(100);
+    doConfiguration();
+  } else if ( MIN_END_ON || MIN_END_ON ) {
     delay(100);
     Serial.println("Calibrate again ! ");
-    delay(100);
     calibrateStepper();
   }
 
