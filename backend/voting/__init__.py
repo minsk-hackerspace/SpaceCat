@@ -23,6 +23,12 @@ app = Flask(__name__,  static_url_path='')
 import redis
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
+def get_decoded(keyname):
+    val = r.get(keyname)
+    if val is not None:
+        val = val.decode('utf-8')
+    return val
+
 
 def put_to_MQTT():
     val = r.get('counter')
@@ -49,16 +55,16 @@ def send_js(path):
 
 @app.route('/')
 def home():
-    val = r.get('counter')
-    if val is None:
-        val = b'0'
-    return render_template('home.html', val=val.decode('utf-8'))
+    val = get_decoded('counter')
+    max_votes = get_decoded('max_votes')
+    return render_template('home.html', val=val, max_votes=max_votes)
 
 @app.route('/status')
 def status():
-    val = r.get('counter')
+    val = get_decoded('counter')
+    max_votes = get_decoded('max_votes')
     # return "Count:" + val.decode('utf-8') + '  ' + request.remote_addr
-    return render_template('status.html', val=val.decode('utf-8'), addr=request.remote_addr )
+    return render_template('status.html', max_votes=max_votes, val=val, addr=request.remote_addr )
 
 @app.route('/vote', methods=['GET', 'POST'])
 def vote_post():
@@ -68,11 +74,12 @@ def vote_post():
         else:
             r.decr('counter', amount=1)
 
-        val = r.get('counter')
+        val = get_decoded('counter')
+        max_votes = get_decoded('max_votes')
         put_to_MQTT()
 
         # return "Hello World!" + val.decode('utf-8')
-        return render_template('vote_done.html', count=val)
+        return render_template('vote_done.html', count=val, max_votes=max_votes)
     else:
         return render_template('vote.html')
 
@@ -87,13 +94,14 @@ def admin_post():
         if password == "go":
             r.set('counter', 0)
             r.set('max_votes', amount)
-            val = r.get('counter')
             put_to_MQTT()
+            val = get_decoded('counter')
             return render_template('admin_done.html', count = val)
         else:
             return 'Пароль то не тот!'
     else:
-        return render_template('admin.html')
+        max_votes = get_decoded('max_votes')
+        return render_template('admin.html', max_votes=max_votes)
 
 
 
